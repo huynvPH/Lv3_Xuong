@@ -38,45 +38,85 @@
   </div>
 </template>
 <script setup>
-import { ref, watch, onMounted } from 'vue'
-import axios from 'axios'
-const props = defineProps(['product', 'brands', 'subcategories', 'statuses'])
-const emit = defineEmits(['close', 'updated'])
-const form = ref({
-  id: '', productName: '', color: '', quantity: '', sellPrice: '', originPrice: '', brandId: '', subcateId: '', statusId: ''
+import { ref, watch } from 'vue'
+import { updateProduct } from '../service'
+
+const props = defineProps({
+  product: { type: Object, default: null },
+  brands: { type: Array, default: () => [] },
+  subcategories: { type: Array, default: () => [] },
+  statuses: { type: Array, default: () => [] }
 })
+
+const emit = defineEmits(['close', 'updated'])
+
+const initialState = () => ({
+  id: '',
+  productName: '',
+  color: '',
+  quantity: '',
+  sellPrice: '',
+  originPrice: '',
+  brandId: '',
+  subcateId: '',
+  statusId: ''
+})
+
+const form = ref(initialState())
+
 watch(() => props.product, (val) => {
-  if (val) {
-    form.value = {
-      id: val.id,
-      productName: val.productName,
-      color: val.color,
-      quantity: val.quantity,
-      sellPrice: val.sellPrice,
-      originPrice: val.originPrice,
-      brandId: val.brandId ? val.brandId[0] : '',
-      subcateId: val.subcateId || '',
-      statusId: val.statusId || ''
-    }
+  if (!val) {
+    form.value = initialState()
+    return
+  }
+
+  const normalisedBrandId = Array.isArray(val.brandId)
+    ? val.brandId[0]
+    : val.brandId
+
+  form.value = {
+    id: val.id,
+    productName: val.productName ?? '',
+    color: val.color ?? '',
+    quantity: val.quantity ?? '',
+    sellPrice: val.sellPrice ?? '',
+    originPrice: val.originPrice ?? '',
+    brandId: normalisedBrandId ?? '',
+    subcateId: val.subcateId ?? '',
+    statusId: val.statusId ?? ''
   }
 }, { immediate: true })
-function submit() {
-  axios.put(`/api/products/${form.value.id}`, {
+
+async function submit() {
+  const brandId = Number(form.value.brandId)
+  const subcateId = Number(form.value.subcateId)
+  const statusId = Number(form.value.statusId)
+
+  if (Number.isNaN(brandId) || Number.isNaN(subcateId) || Number.isNaN(statusId)) {
+    alert('Vui lòng chọn đầy đủ thông tin bắt buộc')
+    return
+  }
+
+  const payload = {
     id: form.value.id,
-    productName: form.value.productName,
-    color: form.value.color,
-    quantity: form.value.quantity,
-    sellPrice: form.value.sellPrice,
-    originPrice: form.value.originPrice,
-    brandId: [parseInt(form.value.brandId)],
-    subcateId: parseInt(form.value.subcateId),
-    statusId: parseInt(form.value.statusId)
-  }).then(() => {
+    productName: form.value.productName.trim(),
+    color: form.value.color.trim(),
+    quantity: Number(form.value.quantity),
+    sellPrice: Number(form.value.sellPrice),
+    originPrice: Number(form.value.originPrice),
+    brandId: [brandId],
+    subcateId,
+    statusId
+  }
+
+  try {
+    await updateProduct(form.value.id, payload)
     emit('updated')
+    form.value = initialState()
     alert('Cập nhật sản phẩm thành công')
-  }).catch(err => {
+  } catch (err) {
     alert('Lỗi khi cập nhật sản phẩm: ' + (err.response?.data?.message || ''))
-  })
+  }
 }
 </script>
 <style scoped>

@@ -1,12 +1,16 @@
 import axios from 'axios'
 
-export const getBrands = () => axios.get('/api/brands')
-export const getCategories = () => axios.get('/api/categories')
-export const getSubcategories = () => axios.get('/api/subcategories')
-export const getStatuses = () => axios.get('/api/statuses')
+const api = axios.create({
+  baseURL: '/api'
+})
 
-export const getProducts = (params) => axios.get('/api/products', { params })
-export const getProductById = (id) => axios.get(`/api/products/${id}`)
-export const addProduct = (data) => axios.post('/api/products', data)
-export const updateProduct = (id, data) => axios.put(`/api/products/${id}`, data)
-export const deleteProduct = (id) => axios.delete(`/api/products/${id}`) 
+export const getBrands = () => api.get('/brands')
+export const getCategories = () => api.get('/categories')
+export const getSubcategories = () => api.get('/subcategories')
+export const getStatuses = () => api.get('/statuses')
+
+export const getProducts = (params) => api.get('/products', { params })
+export const getProductById = (id) => api.get(`/products/${id}`)
+export const addProduct = (data) => api.post('/products', data)
+export const updateProduct = (id, data) => api.put(`/products/${id}`, data)
+export const deleteProduct = (id) => api.delete(`/products/${id}`)

@@ -135,7 +135,15 @@ import { ref, reactive, onMounted } from 'vue'
 import AddProductModal from '../components/AddProductModal.vue'
 import ProductDetailModal from '../components/ProductDetailModal.vue'
 import UpdateProductModal from '../components/UpdateProductModal.vue'
-import axios from 'axios'
+import {
+  getBrands,
+  getCategories,
+  getSubcategories,
+  getStatuses,
+  getProducts,
+  getProductById,
+  deleteProduct as deleteProductRequest
+} from '../service'
 
 const products = ref([])
 const brands = ref([])
@@ -161,41 +169,63 @@ const showDetailModal = ref(false)
 const showUpdateModal = ref(false)
 const selectedProduct = ref(null)
 
-function fetchBrands() {
-  axios.get('/api/brands').then(res => brands.value = res.data)
-}
-function fetchCategories() {
-  axios.get('/api/categories').then(res => categories.value = res.data)
-}
-function fetchSubcategories() {
-  axios.get('/api/subcategories').then(res => subcategories.value = res.data)
-}
-function fetchStatuses() {
-  axios.get('/api/statuses').then(res => statuses.value = res.data)
+async function fetchBrands() {
+  try {
+    const { data } = await getBrands()
+    brands.value = data
+  } catch (error) {
+    brands.value = []
+  }
 }
 
-function fetchProducts() {
-  axios.get('/api/products', {
-    params: {
-      productName: filters.name,
-      price: filters.price || null,
-      brandId: filters.brandId || null,
-      categoryId: filters.categoryId || null,
-      statusId: filters.statusId || null,
-      page: page.value,
-      size
-    }
-  }).then(res => {
-    console.log('API trả về toàn bộ:', res.data)
-    console.log('Mảng products:', res.data.products)
-    products.value = res.data.products || []
-    totalPages.value = res.data.totalPages || 1
-    totalElements.value = res.data.totalElements || 0
-  }).catch(() => {
+async function fetchCategories() {
+  try {
+    const { data } = await getCategories()
+    categories.value = data
+  } catch (error) {
+    categories.value = []
+  }
+}
+
+async function fetchSubcategories() {
+  try {
+    const { data } = await getSubcategories()
+    subcategories.value = data
+  } catch (error) {
+    subcategories.value = []
+  }
+}
+
+async function fetchStatuses() {
+  try {
+    const { data } = await getStatuses()
+    statuses.value = data
+  } catch (error) {
+    statuses.value = []
+  }
+}
+
+async function fetchProducts() {
+  const params = {
+    productName: filters.name.trim() || undefined,
+    price: filters.price === '' || filters.price === null ? undefined : Number(filters.price),
+    brandId: filters.brandId ? Number(filters.brandId) : undefined,
+    categoryId: filters.categoryId ? Number(filters.categoryId) : undefined,
+    statusId: filters.statusId ? Number(filters.statusId) : undefined,
+    page: page.value,
+    size
+  }
+
+  try {
+    const { data } = await getProducts(params)
+    products.value = data.products || []
+    totalPages.value = data.totalPages || 1
+    totalElements.value = data.totalElements || 0
+  } catch (error) {
     products.value = []
     totalPages.value = 1
     totalElements.value = 0
-  })
+  }
 }
 
 function search() {
@@ -210,34 +240,44 @@ function changePage(p) {
   }
 }
 
-function viewProduct(id) {
-  axios.get(`/api/products/${id}`).then(res => {
-    selectedProduct.value = res.data
+async function viewProduct(id) {
+  try {
+    const { data } = await getProductById(id)
+    selectedProduct.value = data
     showDetailModal.value = true
-  })
+  } catch (error) {
+    alert('Không thể tải thông tin sản phẩm')
+  }
 }
 
-function editProduct(id) {
-  axios.get(`/api/products/${id}`).then(res => {
-    selectedProduct.value = res.data
+async function editProduct(id) {
+  try {
+    const { data } = await getProductById(id)
+    selectedProduct.value = data
     showUpdateModal.value = true
-  })
+  } catch (error) {
+    alert('Không thể tải thông tin sản phẩm')
+  }
 }
 
-function deleteProduct(id) {
-  if (confirm('Are you sure you want to delete this product?')) {
-    axios.delete(`/api/products/${id}`).then(() => {
-      fetchProducts()
-      alert('Product deleted successfully')
-    }).catch(err => {
-      alert('Error deleting product: ' + (err.response?.data?.message || ''))
-    })
+async function deleteProduct(id) {
+  if (!confirm('Are you sure you want to delete this product?')) {
+    return
+  }
+
+  try {
+    await deleteProductRequest(id)
+    await fetchProducts()
+    alert('Product deleted successfully')
+  } catch (err) {
+    alert('Error deleting product: ' + (err.response?.data?.message || ''))
   }
 }
 
 function onProductSaved() {
   showAddModal.value = false
   showUpdateModal.value = false
+  selectedProduct.value = null
   fetchProducts()
 }
 

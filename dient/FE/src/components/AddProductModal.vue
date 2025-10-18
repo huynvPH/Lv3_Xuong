@@ -32,27 +32,54 @@
 </template>
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
-const props = defineProps(['brands', 'subcategories'])
-const emit = defineEmits(['close', 'saved'])
-const form = ref({
-  productName: '', color: '', quantity: '', sellPrice: '', originPrice: '', brandId: '', subcateId: ''
+import { addProduct } from '../service'
+
+defineProps({
+  brands: { type: Array, default: () => [] },
+  subcategories: { type: Array, default: () => [] }
 })
-function submit() {
-  axios.post('/api/products', {
-    productName: form.value.productName,
-    color: form.value.color,
-    quantity: form.value.quantity,
-    sellPrice: form.value.sellPrice,
-    originPrice: form.value.originPrice,
-    brandId: parseInt[(form.value.brandId)],
-    subcateId: parseInt(form.value.subcateId)
-  }).then(() => {
+
+const emit = defineEmits(['close', 'saved'])
+
+const initialState = () => ({
+  productName: '',
+  color: '',
+  quantity: '',
+  sellPrice: '',
+  originPrice: '',
+  brandId: '',
+  subcateId: ''
+})
+
+const form = ref(initialState())
+
+async function submit() {
+  const brandId = Number(form.value.brandId)
+  const subcateId = Number(form.value.subcateId)
+
+  if (Number.isNaN(brandId) || Number.isNaN(subcateId)) {
+    alert('Vui lòng chọn đầy đủ thương hiệu và danh mục con')
+    return
+  }
+
+  const payload = {
+    productName: form.value.productName.trim(),
+    color: form.value.color.trim(),
+    quantity: Number(form.value.quantity),
+    sellPrice: Number(form.value.sellPrice),
+    originPrice: Number(form.value.originPrice),
+    brandId: [brandId],
+    subcateId
+  }
+
+  try {
+    await addProduct(payload)
     emit('saved')
+    form.value = initialState()
     alert('Thêm sản phẩm thành công')
-  }).catch(err => {
+  } catch (err) {
     alert('Lỗi khi thêm sản phẩm: ' + (err.response?.data?.message || ''))
-  })
+  }
 }
 
 </script>
