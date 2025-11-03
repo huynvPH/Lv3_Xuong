@@ -149,6 +149,8 @@ const categories = ref([])
 const subcategories = ref([])
 const statuses = ref([])
 
+const googleLoginUrl = import.meta.env.VITE_GOOGLE_LOGIN_URL || '/oauth2/authorization/google'
+
 const filters = reactive({
   name: '',
   price: '',
@@ -205,7 +207,21 @@ function fetchProducts() {
 }
 
 function loginWithGoogle() {
-  console.log('Login with Google clicked')
+  try {
+    if (!googleLoginUrl) {
+      throw new Error('Google login URL is not configured')
+    }
+
+    const isAbsoluteUrl = /^https?:\/\//i.test(googleLoginUrl)
+    const targetUrl = isAbsoluteUrl
+      ? googleLoginUrl
+      : `${window.location.origin}${googleLoginUrl.startsWith('/') ? googleLoginUrl : `/${googleLoginUrl}`}`
+
+    window.location.assign(targetUrl)
+  } catch (error) {
+    console.error('Failed to start Google login', error)
+    alert('Không thể chuyển đến trang đăng nhập Google. Vui lòng thử lại sau.')
+  }
 }
 
 function search() {
