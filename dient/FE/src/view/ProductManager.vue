@@ -29,7 +29,12 @@
         </select>
       </div>
       <div class="col-md-1 d-flex align-items-center justify-content-center">
-        <button class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;padding:0" @click="search" title="Search">
+        <button
+          class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center"
+          style="width:36px;height:36px;padding:0"
+          @click="search"
+          title="Search"
+        >
           <i class="fa fa-search"></i>
         </button>
       </div>
@@ -186,8 +191,6 @@ function fetchProducts() {
       size
     }
   }).then(res => {
-    console.log('API trả về toàn bộ:', res.data)
-    console.log('Mảng products:', res.data.products)
     products.value = res.data.products || []
     totalPages.value = res.data.totalPages || 1
     totalElements.value = res.data.totalElements || 0

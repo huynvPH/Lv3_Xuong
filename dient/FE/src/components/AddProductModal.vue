@@ -35,19 +35,40 @@ import { ref } from 'vue'
 import axios from 'axios'
 const props = defineProps(['brands', 'subcategories'])
 const emit = defineEmits(['close', 'saved'])
-const form = ref({
-  productName: '', color: '', quantity: '', sellPrice: '', originPrice: '', brandId: '', subcateId: ''
+const emptyForm = () => ({
+  productName: '',
+  color: '',
+  quantity: '',
+  sellPrice: '',
+  originPrice: '',
+  brandId: '',
+  subcateId: ''
 })
+
+const form = ref(emptyForm())
+
 function submit() {
-  axios.post('/api/products', {
-    productName: form.value.productName,
-    color: form.value.color,
-    quantity: form.value.quantity,
-    sellPrice: form.value.sellPrice,
-    originPrice: form.value.originPrice,
-    brandId: parseInt[(form.value.brandId)],
-    subcateId: parseInt(form.value.subcateId)
-  }).then(() => {
+  const payload = {
+    productName: form.value.productName.trim(),
+    color: form.value.color.trim(),
+    quantity: Number(form.value.quantity),
+    sellPrice: Number(form.value.sellPrice),
+    originPrice: Number(form.value.originPrice),
+    brandId: [parseInt(form.value.brandId, 10)],
+    subcateId: parseInt(form.value.subcateId, 10)
+  }
+
+  if (
+    [payload.quantity, payload.sellPrice, payload.originPrice].some(Number.isNaN) ||
+    Number.isNaN(payload.brandId[0]) ||
+    Number.isNaN(payload.subcateId)
+  ) {
+    alert('Vui lòng nhập dữ liệu hợp lệ')
+    return
+  }
+
+  axios.post('/api/products', payload).then(() => {
+    form.value = emptyForm()
     emit('saved')
     alert('Thêm sản phẩm thành công')
   }).catch(err => {

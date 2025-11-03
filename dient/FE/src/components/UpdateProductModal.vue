@@ -38,40 +38,69 @@
   </div>
 </template>
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import axios from 'axios'
 const props = defineProps(['product', 'brands', 'subcategories', 'statuses'])
 const emit = defineEmits(['close', 'updated'])
 const form = ref({
-  id: '', productName: '', color: '', quantity: '', sellPrice: '', originPrice: '', brandId: '', subcateId: '', statusId: ''
+  id: '',
+  productName: '',
+  color: '',
+  quantity: '',
+  sellPrice: '',
+  originPrice: '',
+  brandId: '',
+  subcateId: '',
+  statusId: ''
 })
+
+const extractBrandId = (value) => {
+  if (Array.isArray(value)) {
+    return value.length ? value[0] : ''
+  }
+
+  return value ?? ''
+}
+
 watch(() => props.product, (val) => {
   if (val) {
     form.value = {
       id: val.id,
-      productName: val.productName,
-      color: val.color,
-      quantity: val.quantity,
-      sellPrice: val.sellPrice,
-      originPrice: val.originPrice,
-      brandId: val.brandId ? val.brandId[0] : '',
-      subcateId: val.subcateId || '',
-      statusId: val.statusId || ''
+      productName: val.productName ?? '',
+      color: val.color ?? '',
+      quantity: val.quantity ?? '',
+      sellPrice: val.sellPrice ?? '',
+      originPrice: val.originPrice ?? '',
+      brandId: extractBrandId(val.brandId),
+      subcateId: val.subcateId ?? '',
+      statusId: val.statusId ?? ''
     }
   }
 }, { immediate: true })
 function submit() {
-  axios.put(`/api/products/${form.value.id}`, {
+  const payload = {
     id: form.value.id,
-    productName: form.value.productName,
-    color: form.value.color,
-    quantity: form.value.quantity,
-    sellPrice: form.value.sellPrice,
-    originPrice: form.value.originPrice,
-    brandId: [parseInt(form.value.brandId)],
-    subcateId: parseInt(form.value.subcateId),
-    statusId: parseInt(form.value.statusId)
-  }).then(() => {
+    productName: form.value.productName.trim(),
+    color: form.value.color.trim(),
+    quantity: Number(form.value.quantity),
+    sellPrice: Number(form.value.sellPrice),
+    originPrice: Number(form.value.originPrice),
+    brandId: [parseInt(form.value.brandId, 10)],
+    subcateId: parseInt(form.value.subcateId, 10),
+    statusId: parseInt(form.value.statusId, 10)
+  }
+
+  if (
+    [payload.quantity, payload.sellPrice, payload.originPrice].some(Number.isNaN) ||
+    Number.isNaN(payload.brandId[0]) ||
+    Number.isNaN(payload.subcateId) ||
+    Number.isNaN(payload.statusId)
+  ) {
+    alert('Vui lòng nhập dữ liệu hợp lệ')
+    return
+  }
+
+  axios.put(`/api/products/${form.value.id}`, payload).then(() => {
     emit('updated')
     alert('Cập nhật sản phẩm thành công')
   }).catch(err => {
