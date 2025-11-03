@@ -28,9 +28,15 @@
           <option v-for="s in statuses" :key="s.id" :value="s.id">{{ s.statusName }}</option>
         </select>
       </div>
-      <div class="col-md-1 d-flex align-items-center justify-content-center">
+      <div class="col-md-auto d-flex align-items-center justify-content-center">
         <button class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;padding:0" @click="search" title="Search">
           <i class="fa fa-search"></i>
+        </button>
+      </div>
+      <div class="col-md-auto d-flex align-items-center">
+        <button class="btn btn-outline-danger d-flex align-items-center gap-2" @click="loginWithGoogle">
+          <i class="fab fa-google"></i>
+          <span>Login with Google</span>
         </button>
       </div>
     </div>
@@ -196,6 +202,10 @@ function fetchProducts() {
     totalPages.value = 1
     totalElements.value = 0
   })
+}
+
+function loginWithGoogle() {
+  console.log('Login with Google clicked')
 }
 
 function search() {
