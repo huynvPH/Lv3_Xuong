@@ -149,7 +149,8 @@ const categories = ref([])
 const subcategories = ref([])
 const statuses = ref([])
 
-const googleLoginUrl = import.meta.env.VITE_GOOGLE_LOGIN_URL || '/oauth2/authorization/google'
+const googleLoginPath = import.meta.env.VITE_GOOGLE_LOGIN_URL || '/oauth2/authorization/google'
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim()
 
 const filters = reactive({
   name: '',
@@ -206,16 +207,28 @@ function fetchProducts() {
   })
 }
 
+function normalizeBaseUrl(url) {
+  if (!url) return ''
+  return url.endsWith('/') ? url.slice(0, -1) : url
+}
+
+function ensureLeadingSlash(path) {
+  if (!path) return ''
+  return path.startsWith('/') ? path : `/${path}`
+}
+
 function loginWithGoogle() {
   try {
-    if (!googleLoginUrl) {
+    if (!googleLoginPath) {
       throw new Error('Google login URL is not configured')
     }
 
-    const isAbsoluteUrl = /^https?:\/\//i.test(googleLoginUrl)
+    const isAbsoluteUrl = /^https?:\/\//i.test(googleLoginPath)
     const targetUrl = isAbsoluteUrl
-      ? googleLoginUrl
-      : `${window.location.origin}${googleLoginUrl.startsWith('/') ? googleLoginUrl : `/${googleLoginUrl}`}`
+      ? googleLoginPath
+      : `${normalizeBaseUrl(
+          apiBaseUrl || (import.meta.env.DEV ? 'http://localhost:8080' : window.location.origin)
+        )}${ensureLeadingSlash(googleLoginPath)}`
 
     window.location.assign(targetUrl)
   } catch (error) {
