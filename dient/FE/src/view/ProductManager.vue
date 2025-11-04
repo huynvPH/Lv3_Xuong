@@ -1,6 +1,8 @@
 <template>
   <div class="p-4">
-    <h4>Product</h4>
+    <h4 class="mb-4">Product</h4>
+
+    <ProjectInfoCard class="mb-4" />
 
     <!-- Filter Section -->
     <div class="row g-3 align-items-center mb-3">
@@ -140,6 +142,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import AddProductModal from '../components/AddProductModal.vue'
 import ProductDetailModal from '../components/ProductDetailModal.vue'
+import ProjectInfoCard from '../components/ProjectInfoCard.vue'
 import UpdateProductModal from '../components/UpdateProductModal.vue'
 import axios from 'axios'
 
