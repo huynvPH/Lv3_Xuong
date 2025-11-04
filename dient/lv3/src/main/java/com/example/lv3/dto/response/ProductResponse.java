@@ -13,23 +13,29 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 public class ProductResponse {
-	private Long id;
+        private Long id;
 
-	private String productName;
+        private String productName;
 
-	private String color;
+        private String color;
 
-	private Integer quantity;
+        private Integer quantity;
 
-	private BigDecimal sellPrice;
+        private BigDecimal sellPrice;
 
-	private BigDecimal originPrice;
+        private BigDecimal originPrice;
 
-	private String statusName;
+        private String statusName;
 
-	private String subcateName;
+        private Long statusId;
 
-	private String brandNames;
+        private String subcateName;
+
+        private Long subcateId;
+
+        private String brandNames;
+
+        private List<Long> brandIds;
 
 
 }

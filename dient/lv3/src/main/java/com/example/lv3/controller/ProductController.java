@@ -7,12 +7,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
-@Controller
+@RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "http://localhost:3000")
 @RequiredArgsConstructor
@@ -25,26 +25,20 @@ public class ProductController {
 
 	// Tìm kiếm sản phẩm với phân trang và lọc
 	@GetMapping("/products")
-	public ResponseEntity<ProductPageResponse> searchProducts(
-			@RequestParam(required = false) String productName,
-			@RequestParam(required = false, name = "price") Float price,
-			@RequestParam(required = false) Long brandId,
-			@RequestParam(required = false) Long categoryId,
-			@RequestParam(required = false) Long statusId,
-			@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size,
-			Pageable pageable
-	) {
-		if (productName == null) productName = "";
-		if (price == null) price = null;
-		if (brandId == null) brandId = null;
-		if (categoryId == null) categoryId = null;
-		if (statusId == null) statusId = null;
-		Pageable updatePageable = PageRequest.of(page, size);
+        public ResponseEntity<ProductPageResponse> searchProducts(
+                        @RequestParam(required = false) String productName,
+                        @RequestParam(required = false, name = "price") BigDecimal price,
+                        @RequestParam(required = false) Long brandId,
+                        @RequestParam(required = false) Long categoryId,
+                        @RequestParam(required = false) Long statusId,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size
+        ) {
+                Pageable updatePageable = PageRequest.of(page, size);
 
-		ProductPageResponse productPageResponse = productService.searchProducts(productName, brandId, categoryId, statusId, price, updatePageable);
-		return ResponseEntity.ok(productPageResponse);
-	}
+                ProductPageResponse productPageResponse = productService.searchProducts(productName, brandId, categoryId, statusId, price, updatePageable);
+                return ResponseEntity.ok(productPageResponse);
+        }
 
 	// Lấy thông tin chi tiết sản phẩm theo ID
 	@GetMapping("/products/{id}")

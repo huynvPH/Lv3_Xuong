@@ -4,15 +4,18 @@ package com.example.lv3.service.impl;
 import com.example.lv3.dto.request.ProductRequest;
 import com.example.lv3.dto.response.ProductPageResponse;
 import com.example.lv3.dto.response.ProductResponse;
-import com.example.lv3.model.Product;
 import com.example.lv3.model.Brand;
+import com.example.lv3.model.Product;
 import com.example.lv3.repository.*;
+import com.example.lv3.repository.projection.ProductSearchProjection;
 import com.example.lv3.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,87 +25,85 @@ public class ProductServiceImpl implements ProductService {
 
 	private final ProductRepository productRepository;
 
-	private final CategoryRepository categoryRepository;
-
-	private final BrandRepository brandRepository;
+        private final BrandRepository brandRepository;
 
 	private final SubCategoryRepository subCategoryRepository;
 
 	private final StatusRepository statusRepository;
 
 	@Override
-	public ProductPageResponse searchProducts(String productName, Long brandId, Long categoryId, Long statusId, Float price, Pageable pageable) {
-		// Kiểm tra price và thêm điều kiện lọc nếu price không null
-		Page<ProductResponse> productPage;
-		if (price != null) {
-			productPage = productRepository.searchProducts(
-					productName, brandId, categoryId, statusId, price.floatValue(), pageable
-			);
-		} else {
-			productPage = productRepository.searchProducts(
-					productName, brandId, categoryId, statusId, null, pageable
-			);
-		}
+        public ProductPageResponse searchProducts(String productName, Long brandId, Long categoryId, Long statusId, BigDecimal price, Pageable pageable) {
+                Page<ProductSearchProjection> productPage = productRepository.searchProducts(
+                                productName, brandId, categoryId, statusId, price, pageable
+                );
 
-		return ProductPageResponse.builder()
-				.products(productPage.getContent())
-				.currentPage(productPage.getNumber())
-				.totalPages(productPage.getTotalPages())
-				.totalElements(productPage.getTotalElements())
-				.build();
-	}
+                Page<ProductResponse> responsePage = productPage.map(this::mapToProductResponse);
 
-	@Override
-	public void createProduct(ProductRequest productRequest) {
-		Product product = new Product();
-		product.setProductName(productRequest.getProductName());
-		product.setColor(productRequest.getColor());
-		product.setQuantity(productRequest.getQuantity());
-		product.setSellPrice(productRequest.getSellPrice());
-		product.setOriginalPrice(productRequest.getOriginPrice());
-		product.setBrands(productRequest.getBrandId() != null && !productRequest.getBrandId().isEmpty() ?
-				brandRepository.findAllByIdIn(productRequest.getBrandId()) : List.of());
-		// Kiểm tra subcateId
-		if (productRequest.getSubcateId() != null) {
-			product.setSubCategory(subCategoryRepository.findById(Math.toIntExact(productRequest.getSubcateId()))
-					.orElseThrow(() -> new RuntimeException("Subcategory not found with ID: " + productRequest.getSubcateId())));
-		}
-		productRepository.save(product);
-	}
+                return ProductPageResponse.builder()
+                                .products(responsePage.getContent())
+                                .currentPage(responsePage.getNumber())
+                                .totalPages(responsePage.getTotalPages())
+                                .totalElements(responsePage.getTotalElements())
+                                .build();
+        }
 
-	@Override
-	public void updateProduct(Long id, ProductRequest productRequest) {
+        @Override
+        public void createProduct(ProductRequest productRequest) {
+                Product product = new Product();
+                product.setProductName(productRequest.getProductName());
+                product.setColor(productRequest.getColor());
+                product.setQuantity(productRequest.getQuantity());
+                product.setSellPrice(productRequest.getSellPrice());
+                product.setOriginalPrice(productRequest.getOriginPrice());
+                product.setBrands(getBrands(productRequest));
+                // Kiểm tra subcateId
+                if (productRequest.getSubcateId() != null) {
+                        product.setSubCategory(subCategoryRepository.findById(productRequest.getSubcateId())
+                                        .orElseThrow(() -> new RuntimeException("Subcategory not found with ID: " + productRequest.getSubcateId())));
+                }
+                if (productRequest.getStatusId() != null) {
+                        product.setStatus(statusRepository.findById(productRequest.getStatusId())
+                                        .orElseThrow(() -> new RuntimeException("Status not found with ID: " + productRequest.getStatusId())));
+                }
+                productRepository.save(product);
+        }
 
-		Product existingProduct = productRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Product not found"));
+        @Override
+        public void updateProduct(Long id, ProductRequest productRequest) {
+
+                Product existingProduct = productRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Product not found"));
 
 
 		existingProduct.setProductName(productRequest.getProductName());
 
-		existingProduct.setColor(productRequest.getColor());
+                existingProduct.setColor(productRequest.getColor());
 
-		existingProduct.setQuantity(productRequest.getQuantity());
+                existingProduct.setQuantity(productRequest.getQuantity());
 
-		existingProduct.setSellPrice(productRequest.getSellPrice());
+                existingProduct.setSellPrice(productRequest.getSellPrice());
 
-		existingProduct.setOriginalPrice(productRequest.getOriginPrice());
+                existingProduct.setOriginalPrice(productRequest.getOriginPrice());
 
-		existingProduct.setBrands(productRequest.getBrandId() != null && !productRequest.getBrandId().isEmpty() ?
-				brandRepository.findAllByIdIn(productRequest.getBrandId()) : existingProduct.getBrands());
-		// Kiểm tra subcateId
-		if (productRequest.getSubcateId() != null) {
-			existingProduct.setSubCategory(subCategoryRepository.findById(Math.toIntExact(productRequest.getSubcateId()))
-					.orElseThrow(() -> new RuntimeException("Subcategory not found with ID: " + productRequest.getSubcateId())));
-		}
-		// Kiểm tra statusId
-		if (productRequest.getStatusId() != null) {
-			existingProduct.setStatus(statusRepository.findById(Math.toIntExact(productRequest.getStatusId()))
-					.orElseThrow(() -> new RuntimeException("Status not found with ID: " + productRequest.getStatusId())));
-		}
+                if (productRequest.getBrandIds() != null) {
+                        existingProduct.setBrands(productRequest.getBrandIds().isEmpty()
+                                        ? Collections.emptyList()
+                                        : brandRepository.findAllByIdIn(productRequest.getBrandIds()));
+                }
+                // Kiểm tra subcateId
+                if (productRequest.getSubcateId() != null) {
+                        existingProduct.setSubCategory(subCategoryRepository.findById(productRequest.getSubcateId())
+                                        .orElseThrow(() -> new RuntimeException("Subcategory not found with ID: " + productRequest.getSubcateId())));
+                }
+                // Kiểm tra statusId
+                if (productRequest.getStatusId() != null) {
+                        existingProduct.setStatus(statusRepository.findById(productRequest.getStatusId())
+                                        .orElseThrow(() -> new RuntimeException("Status not found with ID: " + productRequest.getStatusId())));
+                }
 
-		productRepository.save(existingProduct);
+                productRepository.save(existingProduct);
 
-	}
+        }
 
 	@Override
 	public void deleteProduct(Long id) {
@@ -113,24 +114,55 @@ public class ProductServiceImpl implements ProductService {
 	}
 
 	@Override
-	public ProductResponse getProduct(Long id) {
-		Product product = productRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Product not found"));
-		List<Long> brandIds = product.getBrands().stream().map(Brand::getId).collect(Collectors.toList());
+        public ProductResponse getProduct(Long id) {
+                Product product = productRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Product not found"));
+                List<Brand> brands = product.getBrands() != null ? product.getBrands() : Collections.emptyList();
+                List<Long> brandIds = brands.stream().map(Brand::getId).collect(Collectors.toList());
+                String brandNames = brands.stream().map(Brand::getBrandName).collect(Collectors.joining(", "));
 
-		// Kiểm tra null cho product.getStatus()
-		String statusName = product.getStatus() != null ? product.getStatus().getStatusName() : "";
+                String statusName = product.getStatus() != null ? product.getStatus().getStatusName() : "";
+                Long statusId = product.getStatus() != null ? product.getStatus().getId() : null;
 
-		return ProductResponse.builder()
-				.id(product.getId())
-				.productName(product.getProductName())
-				.color(product.getColor())
-				.quantity(product.getQuantity())
-				.sellPrice(product.getSellPrice())
-				.originPrice(product.getOriginalPrice())
-				.brandNames(product.getBrands().isEmpty() ? "" : product.getBrands().get(0).getBrandName())
-				.subcateName(product.getSubCategory().getSubCateName())
-				.statusName(statusName)
-				.build();
-	}
+                Long subcateId = product.getSubCategory() != null ? product.getSubCategory().getId() : null;
+                String subcateName = product.getSubCategory() != null ? product.getSubCategory().getSubCateName() : "";
+
+                return ProductResponse.builder()
+                                .id(product.getId())
+                                .productName(product.getProductName())
+                                .color(product.getColor())
+                                .quantity(product.getQuantity())
+                                .sellPrice(product.getSellPrice())
+                                .originPrice(product.getOriginalPrice())
+                                .brandNames(brandNames)
+                                .brandIds(brandIds)
+                                .subcateId(subcateId)
+                                .subcateName(subcateName)
+                                .statusId(statusId)
+                                .statusName(statusName)
+                                .build();
+        }
+
+        private List<Brand> getBrands(ProductRequest productRequest) {
+                List<Long> brandIds = productRequest.getBrandIds();
+                if (brandIds == null || brandIds.isEmpty()) {
+                        return Collections.emptyList();
+                }
+                return brandRepository.findAllByIdIn(brandIds);
+        }
+
+        private ProductResponse mapToProductResponse(ProductSearchProjection projection) {
+                return ProductResponse.builder()
+                                .id(projection.getId())
+                                .productName(projection.getProductName())
+                                .color(projection.getColor())
+                                .quantity(projection.getQuantity())
+                                .sellPrice(projection.getSellPrice())
+                                .originPrice(projection.getOriginPrice())
+                                .statusName(projection.getStatusName() != null ? projection.getStatusName() : "")
+                                .subcateName(projection.getSubcateName() != null ? projection.getSubcateName() : "")
+                                .brandNames(projection.getBrandNames() != null ? projection.getBrandNames() : "")
+                                .brandIds(Collections.emptyList())
+                                .build();
+        }
 }
