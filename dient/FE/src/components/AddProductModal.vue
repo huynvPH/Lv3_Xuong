@@ -39,14 +39,17 @@ const form = ref({
   productName: '', color: '', quantity: '', sellPrice: '', originPrice: '', brandId: '', subcateId: ''
 })
 function submit() {
+  const brandId = form.value.brandId ? parseInt(form.value.brandId, 10) : null
+  const subcateId = form.value.subcateId ? parseInt(form.value.subcateId, 10) : null
+
   axios.post('/api/products', {
     productName: form.value.productName,
     color: form.value.color,
     quantity: form.value.quantity,
     sellPrice: form.value.sellPrice,
     originPrice: form.value.originPrice,
-    brandId: parseInt[(form.value.brandId)],
-    subcateId: parseInt(form.value.subcateId)
+    brandIds: brandId !== null ? [brandId] : [],
+    subcateId
   }).then(() => {
     emit('saved')
     alert('Thêm sản phẩm thành công')

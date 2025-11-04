@@ -54,13 +54,17 @@ watch(() => props.product, (val) => {
       quantity: val.quantity,
       sellPrice: val.sellPrice,
       originPrice: val.originPrice,
-      brandId: val.brandId ? val.brandId[0] : '',
-      subcateId: val.subcateId || '',
-      statusId: val.statusId || ''
+      brandId: Array.isArray(val.brandIds) && val.brandIds.length ? String(val.brandIds[0]) : '',
+      subcateId: val.subcateId ? String(val.subcateId) : '',
+      statusId: val.statusId ? String(val.statusId) : ''
     }
   }
 }, { immediate: true })
 function submit() {
+  const brandId = form.value.brandId ? parseInt(form.value.brandId, 10) : null
+  const subcateId = form.value.subcateId ? parseInt(form.value.subcateId, 10) : null
+  const statusId = form.value.statusId ? parseInt(form.value.statusId, 10) : null
+
   axios.put(`/api/products/${form.value.id}`, {
     id: form.value.id,
     productName: form.value.productName,
@@ -68,9 +72,9 @@ function submit() {
     quantity: form.value.quantity,
     sellPrice: form.value.sellPrice,
     originPrice: form.value.originPrice,
-    brandId: [parseInt(form.value.brandId)],
-    subcateId: parseInt(form.value.subcateId),
-    statusId: parseInt(form.value.statusId)
+    brandIds: brandId !== null ? [brandId] : [],
+    subcateId,
+    statusId
   }).then(() => {
     emit('updated')
     alert('Cập nhật sản phẩm thành công')
