@@ -149,22 +149,7 @@ const categories = ref([])
 const subcategories = ref([])
 const statuses = ref([])
 
-const rawGoogleLoginUrl = import.meta.env.VITE_GOOGLE_LOGIN_URL || '/oauth2/authorization/google'
-
-const fallbackBackendOrigin = import.meta.env.VITE_BACKEND_ORIGIN
-  || ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    && ['3000', '5173'].includes(window.location.port)
-    ? 'http://localhost:8080'
-    : window.location.origin)
-
-let googleLoginUrl = ''
-
-try {
-  googleLoginUrl = new URL(rawGoogleLoginUrl, fallbackBackendOrigin).toString()
-} catch (error) {
-  console.error('Failed to resolve Google login URL', error)
-  googleLoginUrl = `${fallbackBackendOrigin}/oauth2/authorization/google`
-}
+const googleLoginUrl = import.meta.env.VITE_GOOGLE_LOGIN_URL || '/oauth2/authorization/google'
 
 const filters = reactive({
   name: '',
@@ -227,7 +212,12 @@ function loginWithGoogle() {
       throw new Error('Google login URL is not configured')
     }
 
-    window.location.assign(googleLoginUrl)
+    const isAbsoluteUrl = /^https?:\/\//i.test(googleLoginUrl)
+    const targetUrl = isAbsoluteUrl
+      ? googleLoginUrl
+      : `${window.location.origin}${googleLoginUrl.startsWith('/') ? googleLoginUrl : `/${googleLoginUrl}`}`
+
+    window.location.assign(targetUrl)
   } catch (error) {
     console.error('Failed to start Google login', error)
     alert('Không thể chuyển đến trang đăng nhập Google. Vui lòng thử lại sau.')
