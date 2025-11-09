@@ -12,11 +12,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
-public class
-
-
-
-BrandSerimpl implements BrandService {
+public class BrandSerimpl implements BrandService {
 
     private final BrandRepository thuongHieuRepository;
 

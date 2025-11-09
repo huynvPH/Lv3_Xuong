@@ -9,15 +9,14 @@ public class CorsConfigurer implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
+        registry.addMapping("/**") // Áp dụng cho tất cả endpoint
                 .allowedOrigins(
-                        "http://localhost:3000",
-                        "http://localhost:3002",
-                        "http://localhost:5173"
-                )
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
+                        "http://localhost:5173",
+                        "http://localhost:3000"
+                ) // Cho phép cả cổng Vite (5173) lẫn cấu hình cũ (3000)
+                .allowedMethods("GET", "POST", "PUT", "DELETE") // Các phương thức cho phép
+                .allowedHeaders("*") // Cho phép tất cả header
                 .allowCredentials(true)
-                .maxAge(3600);
+                .maxAge(3600); // Thời gian cache (giây)
     }
 }
