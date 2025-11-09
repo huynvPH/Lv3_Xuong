@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -87,8 +88,8 @@ public class ProductServiceImpl implements ProductService {
 
                 if (productRequest.getBrandIds() != null) {
                         existingProduct.setBrands(productRequest.getBrandIds().isEmpty()
-                                        ? Collections.emptyList()
-                                        : brandRepository.findAllByIdIn(productRequest.getBrandIds()));
+                                        ? new ArrayList<>()
+                                        : new ArrayList<>(brandRepository.findAllByIdIn(productRequest.getBrandIds())));
                 }
                 // Kiểm tra subcateId
                 if (productRequest.getSubcateId() != null) {
@@ -146,9 +147,9 @@ public class ProductServiceImpl implements ProductService {
         private List<Brand> getBrands(ProductRequest productRequest) {
                 List<Long> brandIds = productRequest.getBrandIds();
                 if (brandIds == null || brandIds.isEmpty()) {
-                        return Collections.emptyList();
+                        return new ArrayList<>();
                 }
-                return brandRepository.findAllByIdIn(brandIds);
+                return new ArrayList<>(brandRepository.findAllByIdIn(brandIds));
         }
 
         private ProductResponse mapToProductResponse(ProductSearchProjection projection) {
