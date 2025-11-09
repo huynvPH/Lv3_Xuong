@@ -1,6 +1,26 @@
 <template>
-  <div class="p-4">
-    <h4>Product</h4>
+  <div class="p-4 product-page">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <h4 class="mb-0">Product</h4>
+      <div v-if="currentUser" class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2 user-summary">
+          <img
+            v-if="currentUser.picture"
+            :src="currentUser.picture"
+            alt="Ảnh đại diện"
+            class="rounded-circle user-avatar"
+          >
+          <div class="text-end">
+            <div class="fw-semibold">{{ currentUser.name }}</div>
+            <small class="text-muted">{{ currentUser.email }}</small>
+          </div>
+        </div>
+        <button class="btn btn-outline-danger btn-sm" @click="handleLogout">
+          <i class="fas fa-right-from-bracket me-1"></i>
+          Đăng xuất
+        </button>
+      </div>
+    </div>
 
     <!-- Filter Section -->
     <div class="row g-3 align-items-center mb-3">
@@ -138,16 +158,20 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import AddProductModal from '../components/AddProductModal.vue'
 import ProductDetailModal from '../components/ProductDetailModal.vue'
 import UpdateProductModal from '../components/UpdateProductModal.vue'
 import axios from 'axios'
+import { getCurrentUser, clearCurrentUser } from '../service/auth'
 
+const router = useRouter()
 const products = ref([])
 const brands = ref([])
 const categories = ref([])
 const subcategories = ref([])
 const statuses = ref([])
+const currentUser = ref(getCurrentUser())
 
 const googleLoginUrl = import.meta.env.VITE_GOOGLE_LOGIN_URL || '/oauth2/authorization/google'
 
@@ -168,6 +192,11 @@ const showAddModal = ref(false)
 const showDetailModal = ref(false)
 const showUpdateModal = ref(false)
 const selectedProduct = ref(null)
+
+function handleLogout() {
+  clearCurrentUser()
+  router.replace('/login')
+}
 
 function fetchBrands() {
   axios.get('/api/brands').then(res => brands.value = res.data)
@@ -350,6 +379,21 @@ onMounted(() => {
 /* trạng thái nhấn/active */
 .btn-action:active {
   transform: scale(0.95);
+}
+
+.product-page {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+}
+
+.user-summary {
+  min-width: 180px;
 }
 
 </style>
