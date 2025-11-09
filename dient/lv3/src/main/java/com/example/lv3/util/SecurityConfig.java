@@ -14,10 +14,11 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${app.oauth2.success-redirect-uri:http://localhost:5173}")
+
+    @Value("${app.oauth2.success-redirect-uri:http://localhost:3000/products}")
     private String successRedirectUri;
 
-    @Value("${app.oauth2.failure-redirect-uri:http://localhost:5173/login?error}")
+    @Value("${app.oauth2.failure-redirect-uri:http://localhost:3000/login?error}")
     private String failureRedirectUri;
 
     @Bean
@@ -35,7 +36,7 @@ public class SecurityConfig {
                         .failureUrl(failureRedirectUri)
                 )
                 .logout(logout -> logout
-                        .logoutSuccessUrl(successRedirectUri)
+                        .logoutSuccessUrl("http://localhost:3000/")
                         .permitAll()
                 );
 
